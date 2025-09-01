@@ -3,7 +3,7 @@
 Batch processing with Python generators.
 
 - stream_users_in_batches(batch_size): yields rows from the user_data table in batches
-- batch_processing(batch_size): processes batches to filter users over the age of 25
+- batch_processing(batch_size): yields users over age 25 from each batch
 """
 
 import mysql.connector
@@ -24,7 +24,7 @@ def stream_users_in_batches(batch_size):
         connection = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="your_password",  # 🔴 Replace with your MySQL password
+            password="your_password",  # Replace with your MySQL password
             database="ALX_prodev"
         )
         cursor = connection.cursor(dictionary=True)
@@ -48,15 +48,15 @@ def stream_users_in_batches(batch_size):
 
 def batch_processing(batch_size):
     """
-    Processes batches of users and filters those over age 25.
+    Generator that processes batches and yields users over age 25.
 
     Args:
         batch_size (int): number of rows per batch
 
-    Prints:
-        dict: user rows where age > 25
+    Yields:
+        dict: user row where age > 25
     """
     for batch in stream_users_in_batches(batch_size):  # loop #1
         for user in batch:  # loop #2
             if int(user["age"]) > 25:
-                print(user)
+                yield user  # use yield instead of print/return
