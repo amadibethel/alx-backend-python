@@ -5,13 +5,15 @@ Task 0: Logging database queries with a decorator
 
 import sqlite3
 import functools
+from datetime import datetime
 
 
 def log_queries(func):
     """Decorator to log SQL queries before executing them"""
     @functools.wraps(func)
     def wrapper(query, *args, **kwargs):
-        print(f"Executing SQL Query: {query}")
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{timestamp}] Executing SQL Query: {query}")
         return func(query, *args, **kwargs)
     return wrapper
 
