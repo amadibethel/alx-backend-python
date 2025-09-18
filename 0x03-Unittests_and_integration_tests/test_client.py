@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Unit and integration tests for the client.GithubOrgClient class.
+Unit and integration tests for client.GithubOrgClient class.
 """
 
 import unittest
@@ -31,7 +31,7 @@ class TestGithubOrgClient(unittest.TestCase):
         ("abc", {"repos_url": "https://api.github.com/orgs/abc/repos"})
     ])
     def test_public_repos_url(self, mock_get_json, org_name, org_payload):
-        """Test that _public_repos_url property returns the correct URL."""
+        """Test that _public_repos_url returns the correct URL."""
         mock_get_json.return_value = org_payload
         client = GithubOrgClient(org_name)
         self.assertEqual(client._public_repos_url, org_payload["repos_url"])
@@ -39,7 +39,7 @@ class TestGithubOrgClient(unittest.TestCase):
 
     @patch("client.get_json")
     def test_public_repos(self, mock_get_json):
-        """Test that public_repos method returns correct repo names."""
+        """Test public_repos method returns correct repo names."""
         org_name = "google"
         repos_payload = [
             {"name": "repo1", "license": {"key": "my_license"}},
@@ -66,7 +66,7 @@ class TestGithubOrgClient(unittest.TestCase):
         ({"license": None}, "my_license", False)
     ])
     def test_has_license(self, repo, license_key, expected):
-        """Test that has_license static method returns correct boolean."""
+        """Test has_license returns correct boolean value."""
         client = GithubOrgClient("google")
         self.assertEqual(client.has_license(repo, license_key), expected)
 
@@ -97,7 +97,7 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
 
     @classmethod
     def side_effect(cls, url, *args, **kwargs):
-        """Return mocked responses based on the URL."""
+        """Return mocked responses based on URL."""
         if url == "https://api.github.com/orgs/google":
             return Mock(
                 status_code=200,
