@@ -1,21 +1,26 @@
-# messaging_app/chats/views.py
-
-from rest_framework import viewsets, status, filters   # added filters
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
+from .permissions import IsParticipantOfConversation
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """ViewSet for handling conversations."""
-
+    
     queryset = Conversation.objects.all().prefetch_related("participants", "messages")
     serializer_class = ConversationSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]  #
-    search_fields = ["participants__first_name", "participants__last_name", "participants__email"]  #
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["participants__first_name", "participants__last_name", "participants__email"]
+
+    def get_queryset(self):
+        # Only show conversations where the user is a participant
+        return self.queryset.filter(participants=self.request.user)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -34,6 +39,13 @@ class ConversationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def add_message(self, request, pk=None):
         conversation = get_object_or_404(Conversation, pk=pk)
+
+        if request.user not in conversation.participants.all():
+            return Response(
+                {"error": "You are not a participant of this conversation"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         serializer = MessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         message = Message.objects.create(
@@ -45,9 +57,4 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 
 class MessageViewSet(viewsets.ModelViewSet):
-    """ViewSet for handling messages."""
-
-    queryset = Message.objects.all().select_related("sender", "conversation")
-    serializer_class = MessageSerializer
-    filter_backends = [filters.SearchFilter, filters.OrderingFilter]  #
-    search_fields = ["message_body", "sender__email"]  #
+    """ViewSet
