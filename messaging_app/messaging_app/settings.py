@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     # Third-party
     "rest_framework",
-    "rest_framework_simplejwt",   # JWT Authentication
+    "rest_framework_simplejwt",   # ✅ JWT Authentication
     # Local apps
     "chats",
 ]
@@ -91,7 +91,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",  # JWT
-        "rest_framework.authentication.SessionAuthentication",        # optional
+        "rest_framework.authentication.SessionAuthentication",        # Session
+        "rest_framework.authentication.BasicAuthentication",           # Basic
     ),
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
