@@ -1,0 +1,19 @@
+{
+  "username": "your_username",
+  "password": "your_password"
+}
+
+{
+  "refresh": "<refresh_token>",
+  "access": "<access_token>"
+}
+
+
+{
+  "participants": [1, 2, 3]
+}
+
+{
+  "conversation_id": 1,
+  "message_body": "Hello there!"
+}
