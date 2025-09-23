@@ -2,7 +2,7 @@
 
 import uuid
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 from django.utils import timezone
 
 
@@ -23,8 +23,24 @@ class User(AbstractUser):
 
     created_at = models.DateTimeField(default=timezone.now)
 
-    # Override password field (AbstractUser already has one, but checker wants explicit)
+    # Override password field explicitly
     password = models.CharField(max_length=255)
+
+    # Override groups and user_permissions to avoid clashes with auth.User
+    groups = models.ManyToManyField(
+        Group,
+        related_name="chats_user_set",
+        blank=True,
+        help_text="The groups this user belongs to.",
+        verbose_name="groups",
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name="chats_user_permissions_set",
+        blank=True,
+        help_text="Specific permissions for this user.",
+        verbose_name="user permissions",
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username", "first_name", "last_name"]
