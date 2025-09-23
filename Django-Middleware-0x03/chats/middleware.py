@@ -1,8 +1,6 @@
-# chats/middleware.py
 import logging
 from datetime import datetime
 
-# Configure a file handler for this middleware
 logger = logging.getLogger("request_logger")
 file_handler = logging.FileHandler("requests.log")
 formatter = logging.Formatter("%(message)s")
@@ -24,6 +22,4 @@ class RequestLoggingMiddleware:
         log_message = f"{datetime.now()} - User: {user} - Path: {request.path}"
         logger.info(log_message)
 
-        # Continue the request/response cycle
-        response = self.get_response(request)
-        return response
+        return self.get_response(request)
