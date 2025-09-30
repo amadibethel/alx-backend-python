@@ -11,13 +11,12 @@ User = get_user_model()
 @login_required
 def delete_user(request):
     """
-    View to allow a user to delete their account.
+    Delete the logged-in user's account.
     Triggers post_delete signal for cleanup.
     """
     user = request.user
     username = user.username
     user.delete()
-
     messages.success(request, f"Account '{username}' deleted successfully.")
     return redirect("home")
 
@@ -25,7 +24,7 @@ def delete_user(request):
 @login_required
 def send_message(request, receiver_id):
     """
-    View to send a new message, optionally as a reply.
+    Send a new message (optionally as a reply to parent message).
     """
     if request.method == "POST":
         content = request.POST.get("content")
@@ -46,8 +45,8 @@ def send_message(request, receiver_id):
 
 def build_thread(message):
     """
-    Recursive helper to fetch replies for a given message.
-    Optimized with select_related and prefetch_related.
+    Recursive helper to fetch replies for a message using filter().
+    Optimized with select_related + prefetch_related.
     """
     replies_qs = (
         Message.objects.filter(parent_message=message)
@@ -64,7 +63,7 @@ def build_thread(message):
             "receiver": reply.receiver.username,
             "content": reply.content,
             "timestamp": reply.timestamp,
-            "replies": build_thread(reply)  # recursion
+            "replies": build_thread(reply)
         })
     return thread
 
@@ -72,7 +71,7 @@ def build_thread(message):
 @login_required
 def conversation_thread(request, message_id):
     """
-    Fetch all replies for a message in threaded format using a recursive query.
+    Fetch all replies for a message in threaded format.
     """
     message = get_object_or_404(
         Message.objects.select_related("sender", "receiver"), id=message_id
@@ -92,10 +91,10 @@ def conversation_thread(request, message_id):
 @login_required
 def inbox(request):
     """
-    View to display all unread messages for the logged-in user.
-    Uses the custom manager and optimizes with .only().
+    Display all unread messages for the logged-in user.
+    Uses custom manager 'unread' with optimized .only() query.
     """
-    unread_messages = Message.unread.for_user(request.user)
+    unread_messages = Message.unread.unread_for_user(request.user)
 
     messages_data = [
         {
