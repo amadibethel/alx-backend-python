@@ -1,8 +1,10 @@
+# messaging/views.py
 from django.shortcuts import redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.http import JsonResponse
+from django.views.decorators.cache import cache_page
 from .models import Message
 
 User = get_user_model()
@@ -69,9 +71,11 @@ def build_thread(message):
 
 
 @login_required
+@cache_page(60)  # Cache this view for 60 seconds
 def conversation_thread(request, message_id):
     """
     Fetch all replies for a message in threaded format.
+    Cached for 60 seconds.
     """
     message = get_object_or_404(
         Message.objects.select_related("sender", "receiver"), id=message_id
@@ -94,7 +98,7 @@ def inbox(request):
     Display all unread messages for the logged-in user.
     Uses custom manager 'unread' with optimized .only() query.
     """
-    unread_messages = Message.unread.unread_for_user(request.user)
+    unread_messages = Message.unread.for_user(request.user)
 
     messages_data = [
         {
