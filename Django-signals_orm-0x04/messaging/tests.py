@@ -1,22 +1,23 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from .models import Message, Notification
+from .models import Message, MessageHistory
 
 User = get_user_model()
 
 
-class MessagingSignalTest(TestCase):
+class MessageEditSignalTest(TestCase):
     def setUp(self):
         self.sender = User.objects.create_user(username="alice", password="password123")
         self.receiver = User.objects.create_user(username="bob", password="password123")
-
-    def test_notification_created_on_message(self):
-        message = Message.objects.create(
-            sender=self.sender,
-            receiver=self.receiver,
-            content="Hello Bob!"
+        self.message = Message.objects.create(
+            sender=self.sender, receiver=self.receiver, content="Original message"
         )
 
-        notification = Notification.objects.filter(user=self.receiver, message=message)
-        self.assertTrue(notification.exists())
-        self.assertEqual(notification.count(), 1)
+    def test_message_edit_creates_history(self):
+        self.message.content = "Edited message"
+        self.message.save()
+
+        history = MessageHistory.objects.filter(message=self.message)
+        self.assertTrue(history.exists())
+        self.assertEqual(history.first().old_content, "Original message")
+        self.assertTrue(self.message.edited)
