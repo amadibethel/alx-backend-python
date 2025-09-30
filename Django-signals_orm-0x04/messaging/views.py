@@ -43,17 +43,38 @@ def send_message(request, receiver_id):
         return JsonResponse({"message": "Message sent", "id": message.id})
 
 
+def build_thread(message):
+    """
+    Recursive helper to fetch replies for a given message using filter().
+    Optimized with select_related + prefetch_related.
+    """
+    replies_qs = (
+        Message.objects.filter(parent_message=message)
+        .select_related("sender", "receiver")
+        .prefetch_related("replies")
+        .order_by("timestamp")
+    )
+
+    thread = []
+    for reply in replies_qs:
+        thread.append({
+            "id": reply.id,
+            "sender": reply.sender.username,
+            "receiver": reply.receiver.username,
+            "content": reply.content,
+            "timestamp": reply.timestamp,
+            "replies": build_thread(reply)  # recursion
+        })
+    return thread
+
+
 @login_required
 def conversation_thread(request, message_id):
     """
-    Recursive query to fetch all replies for a given message in threaded format.
-    Optimized with select_related + prefetch_related.
+    Fetch all replies for a message in threaded format using a recursive query.
     """
-    message = (
-        Message.objects
-        .select_related("sender", "receiver")
-        .prefetch_related("replies")
-        .get(id=message_id)
+    message = get_object_or_404(
+        Message.objects.select_related("sender", "receiver"), id=message_id
     )
 
     data = {
@@ -62,6 +83,6 @@ def conversation_thread(request, message_id):
         "receiver": message.receiver.username,
         "content": message.content,
         "timestamp": message.timestamp,
-        "replies": message.get_thread()  # recursion happens in model
+        "replies": build_thread(message)  # recursive filter query
     }
     return JsonResponse(data)
