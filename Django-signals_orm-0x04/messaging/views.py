@@ -12,19 +12,20 @@ User = get_user_model()
 def delete_user(request):
     """
     View to allow a user to delete their account.
+    Triggers post_delete signal for cleanup.
     """
     user = request.user
     username = user.username
-    user.delete()  # This triggers post_delete signal
+    user.delete()
 
     messages.success(request, f"Account '{username}' deleted successfully.")
-    return redirect("home")  # redirect to home or login page
+    return redirect("home")
 
 
 @login_required
 def send_message(request, receiver_id):
     """
-    View to send a new message.
+    View to send a new message, optionally as a reply.
     """
     if request.method == "POST":
         content = request.POST.get("content")
@@ -45,7 +46,7 @@ def send_message(request, receiver_id):
 
 def build_thread(message):
     """
-    Recursive helper to fetch replies for a given message using filter().
+    Recursive helper to fetch replies for a given message.
     Optimized with select_related and prefetch_related.
     """
     replies_qs = (
@@ -83,7 +84,7 @@ def conversation_thread(request, message_id):
         "receiver": message.receiver.username,
         "content": message.content,
         "timestamp": message.timestamp,
-        "replies": build_thread(message)  # recursive filter query
+        "replies": build_thread(message)
     }
     return JsonResponse(data)
 
@@ -91,8 +92,8 @@ def conversation_thread(request, message_id):
 @login_required
 def inbox(request):
     """
-    View to show all unread messages for the logged-in user.
-    Uses the custom manager and optimized query with .only().
+    View to display all unread messages for the logged-in user.
+    Uses the custom manager and optimizes with .only().
     """
     unread_messages = Message.unread.for_user(request.user)
 
