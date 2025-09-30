@@ -4,6 +4,17 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+class UnreadMessagesManager(models.Manager):
+    """
+    Custom manager to filter unread messages for a user.
+    Optimized with .only() to fetch only necessary fields.
+    """
+    def for_user(self, user):
+        return self.filter(receiver=user, read=False).only(
+            'id', 'sender', 'receiver', 'content', 'timestamp'
+        )
+
+
 class Message(models.Model):
     sender = models.ForeignKey(
         User, related_name="sent_messages", on_delete=models.CASCADE
@@ -14,28 +25,29 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     edited = models.BooleanField(default=False)
-    edited_by = models.ForeignKey(   # Who edited this message
+    read = models.BooleanField(default=False)  # Track if message has been read
+    edited_by = models.ForeignKey(   # Who performed the edit
         User, null=True, blank=True,
         related_name="edited_messages",
         on_delete=models.SET_NULL
     )
 
-    # Threaded conversations (self-referential foreign key)
+    # Threaded conversation field
     parent_message = models.ForeignKey(
-        "self",
-        null=True,
-        blank=True,
-        related_name="replies",
-        on_delete=models.CASCADE
+        "self", null=True, blank=True, related_name="replies", on_delete=models.CASCADE
     )
+
+    # Managers
+    objects = models.Manager()        # Default manager
+    unread = UnreadMessagesManager()  # Custom manager for unread messages
 
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}: {self.content[:20]}"
 
     def get_thread(self):
         """
-        Recursive method to fetch all replies to this message in threaded format.
-        Optimized with select_related + prefetch_related.
+        Recursive method to fetch all replies to this message.
+        Optimized with select_related and prefetch_related.
         """
         replies = (
             Message.objects.filter(parent_message=self)
@@ -43,7 +55,6 @@ class Message(models.Model):
             .prefetch_related("replies")
             .order_by("timestamp")
         )
-
         thread = []
         for reply in replies:
             thread.append({
