@@ -35,8 +35,8 @@ def send_message(request, receiver_id):
             parent_message = get_object_or_404(Message, id=parent_id)
 
         message = Message.objects.create(
-            sender=request.user,               # required in tests
-            receiver_id=receiver_id,           # required in tests
+            sender=request.user,
+            receiver_id=receiver_id,
             content=content,
             parent_message=parent_message
         )
@@ -46,7 +46,7 @@ def send_message(request, receiver_id):
 def build_thread(message):
     """
     Recursive helper to fetch replies for a given message using filter().
-    Optimized with select_related + prefetch_related.
+    Optimized with select_related and prefetch_related.
     """
     replies_qs = (
         Message.objects.filter(parent_message=message)
@@ -86,3 +86,25 @@ def conversation_thread(request, message_id):
         "replies": build_thread(message)  # recursive filter query
     }
     return JsonResponse(data)
+
+
+@login_required
+def inbox(request):
+    """
+    View to show all unread messages for the logged-in user.
+    Uses the custom manager and optimized query with .only().
+    """
+    unread_messages = Message.unread.for_user(request.user)
+
+    messages_data = [
+        {
+            "id": msg.id,
+            "sender": msg.sender.username,
+            "receiver": msg.receiver.username,
+            "content": msg.content,
+            "timestamp": msg.timestamp,
+        }
+        for msg in unread_messages
+    ]
+
+    return JsonResponse({"unread_messages": messages_data})

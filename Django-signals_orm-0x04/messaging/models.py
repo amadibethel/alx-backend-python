@@ -1,18 +1,8 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from .managers import UnreadMessagesManager
 
 User = get_user_model()
-
-
-class UnreadMessagesManager(models.Manager):
-    """
-    Custom manager to filter unread messages for a user.
-    Optimized with .only() to fetch only necessary fields.
-    """
-    def for_user(self, user):
-        return self.filter(receiver=user, read=False).only(
-            'id', 'sender', 'receiver', 'content', 'timestamp'
-        )
 
 
 class Message(models.Model):
@@ -25,21 +15,17 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     edited = models.BooleanField(default=False)
-    read = models.BooleanField(default=False)  # Track if message has been read
-    edited_by = models.ForeignKey(   # Who performed the edit
-        User, null=True, blank=True,
-        related_name="edited_messages",
-        on_delete=models.SET_NULL
+    read = models.BooleanField(default=False)  # track read/unread
+    edited_by = models.ForeignKey(
+        User, null=True, blank=True, related_name="edited_messages", on_delete=models.SET_NULL
     )
-
-    # Threaded conversation field
     parent_message = models.ForeignKey(
         "self", null=True, blank=True, related_name="replies", on_delete=models.CASCADE
     )
 
     # Managers
-    objects = models.Manager()        # Default manager
-    unread = UnreadMessagesManager()  # Custom manager for unread messages
+    objects = models.Manager()        # default
+    unread = UnreadMessagesManager()  # custom manager
 
     def __str__(self):
         return f"Message from {self.sender} to {self.receiver}: {self.content[:20]}"
@@ -74,10 +60,8 @@ class MessageHistory(models.Model):
     )
     old_content = models.TextField()
     edited_at = models.DateTimeField(auto_now_add=True)
-    edited_by = models.ForeignKey(   # Who performed the edit
-        User, null=True, blank=True,
-        related_name="message_edits",
-        on_delete=models.SET_NULL
+    edited_by = models.ForeignKey(
+        User, null=True, blank=True, related_name="message_edits", on_delete=models.SET_NULL
     )
 
     def __str__(self):
