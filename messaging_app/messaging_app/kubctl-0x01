@@ -22,3 +22,7 @@ kubectl get pods --all-namespaces
 kubectl scale deployment
 
 --replicas", "3
+
+wrk
+
+kubectl top
