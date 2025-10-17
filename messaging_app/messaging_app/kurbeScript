@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Check if Minikube is installed
+if ! command -v minikube &> /dev/null
+then
+    echo "Minikube could not be found, please install it first."
+    exit 1
+fi
+
+# Check if kubectl is installed
+if ! command -v kubectl &> /dev/null
+then
+    echo "kubectl could not be found, please install it first."
+    exit 1
+fi
+
+echo "Starting local Kubernetes cluster..."
+
+# Start Minikube if not running
+if ! minikube status &> /dev/null
+then
+    minikube start --driver=docker
+else
+    echo "Minikube cluster is already running."
+fi
+
+# Verify Kubernetes cluster
+echo "Verifying Kubernetes cluster..."
+kubectl cluster-info
+
+# List all pods across all namespaces
+echo "Listing all pods across all namespaces..."
+kubectl get pods -A
+
+echo "Kubernetes setup complete!"
