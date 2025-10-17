@@ -1,0 +1,17 @@
+{
+    "refresh":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc1ODk2MzY5NCwiaWF0IjoxNzU4ODc3Mjk0LCJqdGkiOiJkOWVlNTJkZDc1Yzg0OGM4ODdlMzY4MTdlOTc0NTEwMyIsInVzZXJfaWQiOiJkY2VhNmJkYS1jN2EzLTRlN2EtODEzZS05NGM1N2VjNzRmMzAifQ.DMbMfW0kOECTzFgvY7bsvbO0VS-3A1FQhl7MAvawLi0",
+    "access":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4ODc3NTk0LCJpYXQiOjE3NTg4NzcyOTQsImp0aSI6IjkyZjk4YjdlNmViZDRmN2NhN2YzMDVhZmU5NTJmODUzIiwidXNlcl9pZCI6ImRjZWE2YmRhLWM3YTMtNGU3YS04MTNlLTk0YzU3ZWM3NGYzMCJ9.Xp8Xg-rsLsCPX4Urjb8fuldEfARmWkk9K4XQJijBzGU"
+};
+
+
+{
+    "detail":"Given token not valid for any token type",
+    "code":"token_not_valid",
+    "messages":[
+        {
+            "token_class":"AccessToken",
+            "token_type":"access",
+            "message":"Token is expired"
+        }
+    ]
+};
