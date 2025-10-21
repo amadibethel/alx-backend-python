@@ -3,6 +3,8 @@ pipeline {
 
     environment {
         GITHUB_CREDENTIALS = credentials('github-creds')
+        DOCKER_CREDENTIALS = credentials('docker-hub-creds')
+        IMAGE_NAME = "your-dockerhub-username/messaging-app:latest"
     }
 
     stages {
@@ -21,8 +23,8 @@ pipeline {
                 sh '''
                     python3 -m venv venv
                     . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r messaging_app/requirements.txt
+                    pip3 install --upgrade pip
+                    pip3 install -r messaging_app/requirements.txt
                 '''
             }
         }
@@ -43,17 +45,37 @@ pipeline {
                 junit 'report.xml'
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                echo 'Building Docker image...'
+                sh '''
+                    docker build -t $IMAGE_NAME .
+                '''
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                echo 'Pushing Docker image to Docker Hub...'
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh '''
+                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
+                        docker push $IMAGE_NAME
+                    '''
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo ' Pipeline completed successfully!'
         }
         failure {
-            echo '❌ Pipeline failed. Please check the logs and test reports.'
+            echo ' Pipeline failed. Please check the logs and test reports.'
         }
     }
 }
 
 pip3 install
-
