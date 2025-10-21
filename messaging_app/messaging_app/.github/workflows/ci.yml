@@ -40,7 +40,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip3 install -r messaging_app/requirements.txt
-          pip3 install pytest pytest-django mysqlclient
+          pip3 install pytest pytest-django pytest-cov flake8 mysqlclient
 
       - name: Wait for MySQL to be ready
         run: |
@@ -52,11 +52,17 @@ jobs:
             sleep 1
           done
 
-      - name: Run Django tests
+      - name: Run flake8 Linting
+        run: |
+          echo "Running flake8 linting..."
+          flake8 messaging_app --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 messaging_app --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+
+      - name: Run Django Tests with Coverage
         run: |
           export DJANGO_SETTINGS_MODULE=messaging_app.settings
           python manage.py migrate
-          pytest messaging_app/tests/ --maxfail=1 --disable-warnings --junitxml=report.xml
+          pytest messaging_app/tests/ --cov=messaging_app --cov-report xml --junitxml=report.xml
 
       - name: Upload Test Report
         uses: actions/upload-artifact@v3
@@ -64,3 +70,8 @@ jobs:
           name: test-report
           path: report.xml
 
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage.xml
