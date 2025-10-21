@@ -1,0 +1,66 @@
+name: Django CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/test_db
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip3 install -r messaging_app/requirements.txt
+          pip3 install pytest pytest-django mysqlclient
+
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in {30..0}; do
+            if mysqladmin ping -h 127.0.0.1 -uroot -proot >/dev/null 2>&1; then
+              break
+            fi
+            echo 'Waiting for MySQL...'
+            sleep 1
+          done
+
+      - name: Run Django tests
+        run: |
+          export DJANGO_SETTINGS_MODULE=messaging_app.settings
+          python manage.py migrate
+          pytest messaging_app/tests/ --maxfail=1 --disable-warnings --junitxml=report.xml
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-report
+          path: report.xml
+
